@@ -6,10 +6,10 @@
 #include <math.h>
 #include "src/rect_components.h"
 #include "src/utils.h"
-
+#include "src/SectorRoom.h"
 
 // Draw a circle
-void drawCircle(float raio, float centroX, float centroY, int bg_angle, int end_angle)
+void drawCircle(double raio, double centroX, double centroY, int bg_angle, int end_angle)
 {
     glPushMatrix();
     glTranslatef(centroX, centroY, 0.0);
@@ -17,41 +17,20 @@ void drawCircle(float raio, float centroX, float centroY, int bg_angle, int end_
     glBegin(GL_LINE_STRIP);
     for (int i = bg_angle; i < end_angle; i++)
     {
-        float degInRad = i * M_PI / 180;
+        double degInRad = i * M_PI / 180;
         glVertex2f(cos(degInRad) * raio, sin(degInRad) * raio);
     }
     if(end_angle == 360) glVertex2f(cos(0) * raio, sin(0) * raio);
-    glEnd();
-
-
-
-    glPopMatrix();
-}
-
-// Draw House's Room
-void drawRoom(float raio, float centroX, float centroY, int bg_angle, int end_angle)
-{
-    glPushMatrix();
-    glTranslatef(centroX, centroY, 0.0);
-
-    glBegin(GL_LINE_LOOP);
-    glVertex2f(0, 0);
-    for (int i = bg_angle; i < end_angle; i++)
-    {
-        float degInRad = i * M_PI / 180;
-        glVertex2f(cos(degInRad) * raio, sin(degInRad) * raio);
-    }
-    glVertex2f(0, 0);
     glEnd();
 
     glPopMatrix();
 }
 
 // Draw house's hall
-void drawHall(float radius, float size)
+void drawHall(double radius, double size)
 {
-    float f = 0.15;
-    float walls[4] = {-size/2 - f, -size/2, size/2, size/2 + f};
+    double f = 0.15;
+    double walls[4] = {-size/2 - f, -size/2, size/2, size/2 + f};
 
     // lines
     glColor3f(1.0f, 0.0f, 0.4f);
@@ -69,25 +48,25 @@ void drawHall(float radius, float size)
 }
 
 // draw the compass rose
-void drawCompassRose(float x0, float y0, float angle)
+void drawCompassRose(double x0, double y0, double angle)
 {
-    float length = 0.5;
-    float rad = angle * M_PI / 180;
+    double length = 0.5;
+    double rad = angle * M_PI / 180;
 
     // m1 = b/a -> V = (a, b)
-    float m1 = tan(rad);
-    float mod_V1 = sqrt(pow(1, 2) + pow(m1, 2));
-    float m2 = -1/m1;
-    float mod_V2 = sqrt(pow(1, 2) + pow(m2, 2));
+    double m1 = tan(rad);
+    double mod_V1 = sqrt(pow(1, 2) + pow(m1, 2));
+    double m2 = -1/m1;
+    double mod_V2 = sqrt(pow(1, 2) + pow(m2, 2));
 
     // original coordenates
     // x, y = (x0 + u * a/|V|, y0 + u * b/|V|)
-    float x = 1/mod_V1*length;
-    float y = m1/mod_V1*length;
+    double x = 1/mod_V1*length;
+    double y = m1/mod_V1*length;
 
     // perpendicular coordenates
-    float px = 1/mod_V2*length;
-    float py = m2/mod_V2*length;
+    double px = 1/mod_V2*length;
+    double py = m2/mod_V2*length;
 
     // set color to white
     glColor3f(1,1,1);
@@ -116,7 +95,7 @@ void RenderScene(void)
     // Enable Zoom
     enable_zoom();
 
-    float wall = 0.15;
+    double wall = 0.15;
 
     // Purple
     glColor3f(1.0f, 0.0f, 0.4f);
@@ -129,31 +108,34 @@ void RenderScene(void)
     drawCircle(2.8, 0, 0, 0, 360);
     drawCircle(2.8 - wall, 0, 0, 0, 360);
 
+    // draw circular setor room
+    SectorRoom * s1 = newSectorRoom("Kitchen", 15, 240);
+    SectorRoom * s2 = newSectorRoom("WC", 10, -6);
+    SectorRoom * s3 = newSectorRoom("Bedroom", 28, 70);
+
+    s1->draw(s1, 2.8 - wall, 6.2);
+    s1->put_windows(s1, 1, 1.8, 6.2);
+    s2->draw(s2, 2.8 - wall, 6.2);
+    s2->put_windows(s2, 1, 2.20, 6.2);
+    s3->draw(s3, 2.8 - wall, 6.2);
+    s3->put_windows(s3, 1, 2.20, 6.2);
+
     // Draw Hall
-    drawHall(6.2, 1.5);
+    //drawHall(6.2, 1.5);
+
+    /*glLineStipple(2, 0x6DB6);
+    glEnable(GL_LINE_STIPPLE);
+    glBegin(GL_LINES);
+    glVertex2f(0.0f, 0.0f);
+    glVertex2f(0.0f, 4.0f);
+    glEnd();
+    glDisable(GL_LINE_STIPPLE);*/
 
     // Draw Compass
-    drawCompassRose(3, 4, 30);
-    drawCompassRose(-3, 4, 45);
-    drawCompassRose(-3, -4, 110);
-    //drawCompassRose(3, -4, 80);
-    drawCompassRose(3, -4, 194);
-    drawCompassRose(3, -6, 290);
-    //drawCompassRose(-3, -4, 90);
+    drawCompassRose(5, -6, 60);
 
-    //glRasterPos2i(10, 10);
-    //glutBitmapString(GLUT_BITMAP_8_BY_13, "Hello, World!");
-
-    // Yellow
-    glColor3f(1.0f, 1.0f, 0.0f);
-    drawCircle(6.2, 0, 0, 0, 30);
-    drawCircle(6.2 - wall, 0, 0, 0, 30);
-
-    // Green
-    glColor3f(0.4f, 1.0f, 0.2f);
-    drawCircle(6.2 - wall/3, 0, 0, 0, 30);
-    drawCircle(6.2 - wall/3*2, 0, 0, 0, 30);
-    drawCircle(0.3, 2, 2, 0, 360);
+    //people representation
+    drawCircle(0.3, 4, -3, 0, 360);
 
     // flush drawing commands and swap
     glutSwapBuffers();
@@ -191,10 +173,10 @@ void SetupRC(void)
 
 void reshape(int w, int h)
 {
-    //GLfloat aspectRatio;
-    float aspectRatio = (float)w / h;
-    float sx = aspectRatio > 1.0f ? aspectRatio : 1.0f;
-    float sy = aspectRatio > 1.0f ? 1.0f : 1.0f/aspectRatio;
+    //GLdouble aspectRatio;
+    double aspectRatio = (double)w / h;
+    double sx = aspectRatio > 1.0f ? aspectRatio : 1.0f;
+    double sy = aspectRatio > 1.0f ? 1.0f : 1.0f/aspectRatio;
     // set view port
     // view port will be reshape with the windows
     glViewport(0, 0, (GLsizei) w, (GLsizei) h);

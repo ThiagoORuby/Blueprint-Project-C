@@ -3,6 +3,7 @@
 #define UTILS_H
 
 #define WALL 0.15f
+#define DOOR_BOX 0.03f
 
 extern float scale;
 extern float zoom_k;

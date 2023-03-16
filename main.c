@@ -26,26 +26,6 @@ void drawCircle(double raio, double centroX, double centroY, int bg_angle, int e
     glPopMatrix();
 }
 
-// Draw house's hall
-void drawHall(double radius, double size)
-{
-    double f = 0.15;
-    double walls[4] = {-size/2 - f, -size/2, size/2, size/2 + f};
-
-    // lines
-    glColor3f(1.0f, 0.0f, 0.4f);
-
-    for(int i = 0; i < 4; i++)
-    {
-        glPushMatrix();
-        glTranslatef(walls[i], 0.0f, 1.0f);
-        glBegin(GL_LINE_LOOP);
-        glVertex2f(0, 0);
-        glVertex2f(0, radius);
-        glEnd();
-        glPopMatrix();
-    }
-}
 
 // draw the compass rose
 void drawCompassRose(double x0, double y0, double angle)
@@ -111,31 +91,28 @@ void RenderScene(void)
     // draw circular setor room
     SectorRoom * s1 = newSectorRoom("Kitchen", 15, 240);
     SectorRoom * s2 = newSectorRoom("WC", 10, -6);
-    SectorRoom * s3 = newSectorRoom("Bedroom", 28, 70);
+    SectorRoom * s3 = newSectorRoom("Bedroom", 23, 120);
+    SectorRoom * s4 = newSectorRoom("Hall", 8, 80);
 
-    s1->draw(s1, 2.8 - wall, 6.2);
-    s1->put_windows(s1, 1, 1.8, 6.2);
-    s2->draw(s2, 2.8 - wall, 6.2);
-    s2->put_windows(s2, 1, 2.20, 6.2);
-    s3->draw(s3, 2.8 - wall, 6.2);
-    s3->put_windows(s3, 1, 2.20, 6.2);
+    s1->draw(s1, 2.8 - wall, 6.2, -1);
+    s1->put_windows(s1, -1, 1, 1.8, 6.2);
+    s1->put_doors(s1, 2, 0.80, 6.2);
 
-    // Draw Hall
-    //drawHall(6.2, 1.5);
+    s2->draw(s2, 2.8 - wall, 6.2, -1);
+    s2->put_windows(s2,1, 1, 1.1, 6.2);
+    s2->put_doors(s2, 2, 0.60, 6.2);
 
-    /*glLineStipple(2, 0x6DB6);
-    glEnable(GL_LINE_STIPPLE);
-    glBegin(GL_LINES);
-    glVertex2f(0.0f, 0.0f);
-    glVertex2f(0.0f, 4.0f);
-    glEnd();
-    glDisable(GL_LINE_STIPPLE);*/
+    s3->draw(s3, 2.8 - wall, 6.2, -1);
+    s3->put_windows(s3,-1, 1, 2.20, 6.2);
+    s3->put_doors(s3, 2, 0.80, 6.2);
+
+    // desenhando banheiro
+    s4->draw(s4, 2.8 - wall, 6.2, -1);
+    s4->put_windows(s4, 1, 1, 0.8, 6.2);
+    s4->put_doors(s4, 1, 1.1, 6.2);
 
     // Draw Compass
     drawCompassRose(5, -6, 60);
-
-    //people representation
-    drawCircle(0.3, 4, -3, 0, 360);
 
     // flush drawing commands and swap
     glutSwapBuffers();

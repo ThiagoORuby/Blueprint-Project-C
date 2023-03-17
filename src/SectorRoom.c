@@ -151,11 +151,6 @@ void putSectorWindows(SectorRoom * obj, int type, int qnt, double length, double
         glEnd();
     }
 
-    /*glBegin(GL_LINE_LOOP);
-    glVertex2f(points[2][0], points[2][1]);
-    glVertex2f(points[3][0], points[3][1]);
-    glEnd();*/
-
     // draw the conected arcs
     if(type == -1) 
     {
@@ -170,19 +165,16 @@ void putSectorWindows(SectorRoom * obj, int type, int qnt, double length, double
     return;
 }
 
-// DOOR TYPES
-void _simple_door(double points[][2], double limit_line[][2], double length, int dir, int inverse, int inside)
+void _draw_linear_boxes(double points[][2], double limit_line[][2], double length, double *m, int dir, int order[])
 {
-    double m, m1, bg_angle, end_angle, dangle, fator = 1, leaf_points[4][2], leaf_disp[2] = {0, length};
-    double * bg_point, * end_point;
     double disp[3] = {DOOR_BOX, DOOR_BOX + length, 2*DOOR_BOX + length};
-    int order[4] = {0, 2, 3, 1}, k = 0;
+    int k = 0;
 
-    m = _coef(limit_line);
+    *m = _coef(limit_line);
     for(int i = 1; i < 4; i++)
     {
-            displace_point(points[0], m, disp[i-1], points[i*2], dir);
-            displace_point(points[1], m, disp[i-1], points[i*2 + 1], dir);
+            displace_point(points[0], *m, disp[i-1], points[i*2], dir);
+            displace_point(points[1], *m, disp[i-1], points[i*2 + 1], dir);
     }
 
     // draw the boxes
@@ -207,16 +199,20 @@ void _simple_door(double points[][2], double limit_line[][2], double length, int
         glVertex2f(points[i+2][0], points[i+2][1]);
         glEnd();
     }
-     k = (limit_line[0][1] > 0) ? 1 : -1;
+}
+
+// DOOR TYPES
+void _simple_door(double points[][2], double limit_line[][2], double length, int dir, int inverse, int inside)
+{
+    double m, m1, bg_angle, end_angle, dangle, leaf_points[4][2], leaf_disp[2] = {0, length};
+    double * bg_point, * end_point;
+    int order[4] = {0, 2, 3, 1}, k;
+    k = (limit_line[0][1] > 0) ? 1 : -1;
+
+    _draw_linear_boxes(points, limit_line, length, &m, dir, order);
+
     // check the configs
-    if(inverse == 0 && inside == 0){ bg_point = points[2]; end_point = points[4]; }
-    else if(inverse == 0 && inside == 1){ 
-        bg_point = points[3]; end_point = points[5]; 
-        k *= (-1); fator = -1;}
-    else if(inverse == 1 && inside == 0){ 
-        bg_point = points[4]; end_point = points[2]; 
-        dir *= (-1); fator = -1;}
-    else { bg_point = points[5]; end_point = points[3]; k *= (-1); dir *= (-1);}
+    bg_point = points[2]; end_point = points[4];
 
     // draw the door leaf
     glColor3f(0.4f, 1.0f, 0.2f); // green color
@@ -242,44 +238,21 @@ void _simple_door(double points[][2], double limit_line[][2], double length, int
     if(dangle > M_PI) dangle = 2*M_PI - dangle;
     else if(dangle < -M_PI) dangle = 2*M_PI + dangle;
 
-    if(inverse == 0 && inside == 1 && bg_angle < end_angle){
-        //fator = 1;
-        bg_angle = end_angle;
-    }
-
     printf("begin = %.2lf, end = %.2lf\n\n", bg_angle, end_angle);
     glColor3f(0.8, 0.2, 0);
-    _draw_arc(length, bg_point[0], bg_point[1], bg_angle, bg_angle+dangle, fator*0.01);
+    _draw_arc(length, bg_point[0], bg_point[1], bg_angle, bg_angle+dangle, 0.01);
 }
 
 
 void _sliding_door(double points[][2], double limit_line[][2], double length, int dir)
 {
     double m, m1, leaf_points[4][2], leaf_disp[2] = {0.075, 0.105};
-    double disp[3] = {DOOR_BOX, DOOR_BOX + length, 2*DOOR_BOX + length};
     int order[4] = {0, 2, 3, 1}, k = 0;
 
-   m = _coef(limit_line);
-   for(int i = 1; i < 4; i++)
-   {
-        displace_point(points[0], m, disp[i-1], points[i*2], dir);
-        displace_point(points[1], m, disp[i-1], points[i*2 + 1], dir);
-   }
-
-    // draw the boxes
-    glColor3f(0.4f, 1.0f, 0.2f); // green color
-    for(int i = 0; i < 2; i++)
-    {
-        glBegin(GL_LINE_LOOP);
-        for(int j = 0; j < 4; j++)
-        {
-            glVertex2f(points[order[j] + k][0], points[order[j] + k][1]);
-        }
-        glEnd();
-        k += 4;
-    }
+    _draw_linear_boxes(points, limit_line, length, &m, dir, order);
 
     // draw the leaves by point[3] and point[5]
+    glColor3f(0.4f, 1.0f, 0.2f); // green color
     k = (limit_line[0][1] > 0) ? 1 : -1;
     m1 = _coef2(points[0], points[1]);
     for(int i = 3; i < 5; i++)
@@ -299,16 +272,6 @@ void _sliding_door(double points[][2], double limit_line[][2], double length, in
 
         dir *= (-1);
         k *= (-1);
-    }
-
-    // draw the conection lines
-    glColor3f(0.8, 0.2, 0); // red color
-    for(int i = 2; i < 4; i++)
-    {
-        glBegin(GL_LINE_LOOP);
-        glVertex2f(points[i][0], points[i][1]);
-        glVertex2f(points[i+2][0], points[i+2][1]);
-        glEnd();
     }
 }
 

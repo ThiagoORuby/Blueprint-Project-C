@@ -92,7 +92,7 @@ void RenderScene(void)
     SectorRoom * s1 = newSectorRoom("Kitchen", 15, 240);
     SectorRoom * s2 = newSectorRoom("WC", 10, -6);
     SectorRoom * s3 = newSectorRoom("Bedroom", 23, 120);
-    SectorRoom * s4 = newSectorRoom("Hall", 8, 80);
+    SectorRoom * s4 = newSectorRoom("Hall", 8, 50);
 
     s1->draw(s1, 2.8 - wall, 6.2, -1);
     s1->put_windows(s1, -1, 1, 1.8, 6.2);

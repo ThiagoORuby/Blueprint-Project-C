@@ -1,12 +1,221 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <time.h>
 #include <GL/freeglut.h>
 #include <GL/glu.h>
 #define _USE_MATH_DEFINES
 #include <math.h>
-#include "src/rect_components.h"
+
 #include "src/utils.h"
 #include "src/SectorRoom.h"
+#include "src/furniture_components.h"
+#include "src/vector.h"
+#include "src/Rooms.h"
+
+// extern params
+extern Room room_types[8];
+
+// Global params
+double width, height;
+double r1 = 3.4;
+double r2;
+double wf;
+double north_angle;
+Room * list_rooms = NULL;
+int required_rooms[] = {0, 1, 2, 3, 3, 3, 2, 1, 6, 4, 5};
+int aditional_rooms[] = {7, 3, 2};
+
+double random_area(int interval[2])
+{
+    srand(time(NULL)); // initialize random seed
+    int random = rand() % (interval[1] - interval[0]) + interval[0];
+    return (double) random;
+}
+
+void initialize_required_list()
+{
+    for(int i = 0; i < 11; i++)
+    {
+        Room aux = room_types[required_rooms[i]];
+        double area = random_area(aux.area_interval);
+        //printf("area random: %.2lf\n", area);
+        pushRoom(&list_rooms, aux, area, wf);
+    }
+}
+
+void draw_room_list(Room * list)
+{
+    double init_angle = -10, new_angle;
+    Room * temp = list;
+
+    temp->super->bg_angle = init_angle;
+    temp->super->draw(temp->super, r1 - WALL, r2, 1);
+    new_angle = temp->super->bg_angle + temp->super->delta;
+    temp = temp->next;
+    while(temp != list)
+    {
+        temp->super->bg_angle = new_angle;
+        temp->super->draw(temp->super, r1 - WALL, r2, 1);
+        new_angle = temp->super->bg_angle + temp->super->delta;
+        temp = temp->next;
+    }
+}
+
+double calc_rest_area(Room * list)
+{
+    double dangle, area;
+    Room * prev = list->prev;
+
+
+    dangle = (list->super->bg_angle + 360) - (prev->super->bg_angle + prev->super->delta);
+
+    area = (dangle * M_PI * (r2 - (r1 - WALL)) * (r2 + (r1 - WALL)))/360;
+
+    printf("Bg angle first = %.2lf, End angle last = %.2lf\n", list->super->bg_angle,
+    prev->super->bg_angle + prev->super->delta);
+    printf("Area restante: %.2lf\n", area);
+    return area;
+}
+
+int find_rooms_below_max(Room * list)
+{
+    int count = 0;
+    Room * temp = list;
+    do{
+        if(temp->super->area < temp->area_interval[1]) count++;
+        temp = temp->next;
+    }while(temp != list);
+
+    return count;
+}
+
+int find_rooms_above_min(Room * list)
+{
+    int count = 0;
+    Room * temp = list;
+    do{
+        if(temp->super->area > temp->area_interval[0]) count++;
+        temp = temp->next;
+    }while(temp != list);
+
+    return count;
+}
+
+void propagate_new_area(Room * list, double add_area)
+{
+    double limit, true_add;
+    Room * temp = list;
+    do{
+        if(add_area > 0)
+        {
+            if(temp->super->area < temp->area_interval[1])
+            {
+                limit = temp->area_interval[1] - temp->super->area;
+                true_add = (add_area > limit) ? limit : add_area;
+                temp->super->area += true_add;
+                temp->super->true_area += true_add;
+            }
+        }
+        else
+        {
+            if(temp->super->area > temp->area_interval[0])
+            {
+                limit = temp->area_interval[0] - temp->super->area;
+                true_add = (add_area < limit) ? limit : add_area;
+                temp->super->area += true_add;
+                temp->super->true_area += true_add;
+            }
+        }
+        temp = temp->next;
+    }while(temp != list);
+}
+
+int try_add_new_room(Room * list, double area)
+{
+    for(int i = 0; i < 3; i++)
+    {
+        Room room = room_types[aditional_rooms[i]];
+        if(area >= room.area_interval[0] && area <= room.area_interval[1])
+        {
+            pushRoom(&list, room, area, wf);
+            return 1;
+        }
+    }
+    return 0;
+}
+
+void propagate_without_limit(Room * list, double area)
+{
+    Room * temp;
+    double add_area = area/11;
+
+    do{
+        temp->super->area += add_area;
+        temp->super->true_area += add_area;
+        temp = temp->next;
+    }while(temp != list);
+
+}
+
+// draw all windows
+void draw_all_windows(Room * list)
+{
+    Room * temp = list;
+    char name[20];
+    do{
+        strcpy(name, temp->super->name);
+        if(strcmp(name, "Hall") && strcmp(name, "Closet"))
+        {
+            strcpy(name, temp->super->name);
+            if(!strcmp(name, "WC") || !strcmp(name, "Lavanderia")) 
+                temp->super->put_windows(temp->super, 1, 1, 0.6, r2);
+            else
+                temp->super->put_windows(temp->super, -1, 1, 1.5, r2);
+        }
+        temp = temp->next;
+    }while(temp != list);
+}
+
+// draw all doors
+
+// draw furnitures
+
+void algorithm(Room * list)
+{
+    int rooms_qnt;
+    double area, add_area;
+    draw_room_list(list);
+    area = calc_rest_area(list);
+    if(area > 1e-8)
+    {
+        rooms_qnt = find_rooms_below_max(list);
+        printf("rooms qnt: %d\n", rooms_qnt);
+        if(rooms_qnt > 0)
+        {
+            add_area = area/rooms_qnt;
+            propagate_new_area(list, add_area);
+        }
+        else // rooms_qnt == 0 -> nao eh possivel aumentar os quartos
+        {
+            if(!try_add_new_room(list, area)) propagate_without_limit(list, area);
+        }
+    }
+    else if (area < 0)
+    {
+        rooms_qnt = find_rooms_above_min(list);
+        printf("rooms qnt: %d\n", rooms_qnt);
+        if(rooms_qnt > 0)
+        {
+            add_area = area/rooms_qnt;
+            propagate_new_area(list, add_area);
+        }
+    }else
+    {
+        printf("to aqui");
+        draw_all_windows(list);
+    }
+
+}
 
 // Draw a circle
 void drawCircle(double raio, double centroX, double centroY, int bg_angle, int end_angle)
@@ -26,45 +235,14 @@ void drawCircle(double raio, double centroX, double centroY, int bg_angle, int e
     glPopMatrix();
 }
 
-
-// draw the compass rose
-void drawCompassRose(double x0, double y0, double angle)
+void drawGround(double w, double h)
 {
-    double length = 0.5;
-    double rad = angle * M_PI / 180;
-
-    // m1 = b/a -> V = (a, b)
-    double m1 = tan(rad);
-    double mod_V1 = sqrt(pow(1, 2) + pow(m1, 2));
-    double m2 = -1/m1;
-    double mod_V2 = sqrt(pow(1, 2) + pow(m2, 2));
-
-    // original coordenates
-    // x, y = (x0 + u * a/|V|, y0 + u * b/|V|)
-    double x = 1/mod_V1*length;
-    double y = m1/mod_V1*length;
-
-    // perpendicular coordenates
-    double px = 1/mod_V2*length;
-    double py = m2/mod_V2*length;
-
-    // set color to white
-    glColor3f(1,1,1);
-
+    glColor3f(1, 1, 1);
     glBegin(GL_LINE_LOOP);
-    glVertex2f(x0 - x, y0 - y);
-    glVertex2f(x0 + x, y0 + y);
-    glEnd();
-
-    // Draw the North indicate
-    if (angle <= 90 || (angle >= 270 && angle <= 360))
-        drawChar(x0 + x + 0.1, y0 + y + 0.1, 'N');
-    else
-        drawChar(x0 - x + 0.1, y0 - y + 0.1, 'N');
-
-    glBegin(GL_LINE_LOOP);
-    glVertex2f(x0 - px, y0 - py);
-    glVertex2f(x0 + px, y0 + py);
+    glVertex2f(w/2, h/2);
+    glVertex2f(w/2, -h/2);
+    glVertex2f(-w/2, -h/2);
+    glVertex2f(-w/2, h/2);
     glEnd();
 }
 
@@ -75,54 +253,69 @@ void RenderScene(void)
     // Enable Zoom
     enable_zoom();
 
-    double wall = 0.15;
+    // draw the ground
+    drawGround(width, height);
+    drawGround(width + 0.3, height + 0.3);
 
     // Purple
     glColor3f(1.0f, 0.0f, 0.4f);
 
-    drawCircle(6.2, 0, 0, 0, 360);
-    drawCircle(6.2 - wall, 0, 0, 0, 360);
-    //drawRoom(6.2 - wall, 0, 0, 90, 90 + 30);
+    drawCircle(r2, 0, 0, 0, 360);
+    drawCircle(r2 - WALL, 0, 0, 0, 360);
+    //drawRoom(width - wall, 0, 0, 90, 90 + 30);
 
     glColor3f(1.0f, 0.0f, 0.4f);
-    drawCircle(2.8, 0, 0, 0, 360);
-    drawCircle(2.8 - wall, 0, 0, 0, 360);
+    drawCircle(r1, 0, 0, 0, 360);
+    drawCircle(r1 - WALL, 0, 0, 0, 360);
 
-    // draw circular setor room
-    SectorRoom * s1 = newSectorRoom("Kitchen", 15, 240);
-    SectorRoom * s2 = newSectorRoom("WC", 10, -6);
-    SectorRoom * s3 = newSectorRoom("Bedroom", 23, 120);
-    SectorRoom * s4 = newSectorRoom("Hall", 8, 50);
-
-    s1->draw(s1, 2.8 - wall, 6.2, -1);
-    s1->put_windows(s1, -1, 1, 1.8, 6.2);
-    s1->put_doors(s1, 2, 0.80, 6.2);
-
-    s2->draw(s2, 2.8 - wall, 6.2, -1);
-    s2->put_windows(s2,1, 1, 1.1, 6.2);
-    s2->put_doors(s2, 2, 0.60, 6.2);
-
-    s3->draw(s3, 2.8 - wall, 6.2, -1);
-    s3->put_windows(s3,-1, 1, 2.20, 6.2);
-    s3->put_doors(s3, 2, 0.80, 6.2);
-
-    // desenhando banheiro
-    s4->draw(s4, 2.8 - wall, 6.2, -1);
-    s4->put_windows(s4, 1, 1, 0.8, 6.2);
-    s4->put_doors(s4, 1, 1.1, 6.2);
+    algorithm(list_rooms);
 
     // Draw Compass
-    drawCompassRose(5, -6, 60);
+    drawCompassRose(5, -6, north_angle);
 
-    // flush drawing commands and swap
+    draw_toilet(0, 0);
+
+    // draw plants
+    double s = 0.3;
+    glColor3f(0.2, 0.5, 0.1);
+    for(double i = 0; i <= 2*M_PI; i += M_PI/12)
+    {
+        glBegin(GL_LINE_LOOP);
+        glVertex2d(0, -1);
+        glVertex2d(0 + s*cos(i), -1 + s*sin(i));
+        glEnd();
+        if(s == 0.3) s = 0.23;
+        else s = 0.3;
+    }
+
+    glColor3f(1, 1, 1);
+    drawCircle(0.2, 0, -1, 0, 360);
+    drawCircle(0.15, 0, -1, 0, 360);
+
+    glColor3f(0.1, 0.6, 0.3);
+    glPushMatrix();
+    for(double i = 0; i <= 360; i += 360.0/8)
+    {
+        glTranslatef(1, -1, 0);
+        glRotatef(i, 0, 0, 1);
+        glTranslatef(-1, 1, 0);
+        glBegin(GL_LINE_LOOP);
+        glVertex2d(1, -1);
+        glVertex2d(1 + 0.05, -1 + 0.05);
+        glVertex2d(1 + 0.3, -1);
+        glVertex2d(1 + 0.05, -1 - 0.05);
+        glEnd();
+    }
+    glPopMatrix();
+
+    drawCircle(0.3, 2, 1, 0, 360);
+
     glutSwapBuffers();
 }
 
 // press key function
 void keyboard(unsigned char key, int x, int y)
 {
-    printf("Press key = %c\n", key);
-
     if(key == 'q')
     {
         exit(0);
@@ -130,12 +323,10 @@ void keyboard(unsigned char key, int x, int y)
     if(key == '=')
     {
         zoom_in(scale);
-        printf("%f\n", zoom_k);
     }
     if(key == '-')
     {
         zoom_out(scale);
-        printf("%f\n", zoom_k);
     }
 
     glutPostRedisplay();
@@ -170,16 +361,36 @@ void reshape(int w, int h)
 
 int main(int argc, char* argv[])
 {
+    // Get the house params
+    printf("###### BLUEPRINT PROJECT ######\n\n");
+
+    printf("Digite os valores de largura e altura do terreno: ");
+    scanf("%lf %lf", &width, &height);
+
+    printf("\nDigite o angulo correspondente ao norte: ");
+    scanf("%lf", &north_angle);
+
+    // House limit area == 120m2
+    r2 = (height - 0.2)/2;
+    if(r2 < 6.2) return printf("Não é possível gerar uma casa circular com essas dimensões");
+    
+    
+    wf = ((r2 - 0.15) - (r1 + 0.15))*0.15;
+
     // initial configs
     glutInit(&argc, argv);
     glutInitDisplayMode(GLUT_SINGLE | GLUT_RGBA);
 
     // create windows
     glutInitWindowPosition(200, 100);
-    glutInitWindowSize(500, 500);
-    glutCreateWindow("Casinha de ED");
+    glutInitWindowSize(800, 600);
+    glutCreateWindow("Blueprint Project");
 
-    printf("Hello world!\n");
+    // initialize list of room types
+    setRoomTypes();
+
+    initialize_required_list();
+    printRooms(list_rooms);
 
     // register GLUT callbacks
     glutDisplayFunc(RenderScene);

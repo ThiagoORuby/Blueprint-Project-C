@@ -29,6 +29,9 @@ void reverseList(Room** list);
 // Printa a lista circular
 void printRooms(Room * list);
 
+// libera os espaços
+int freeRooms(Room * list);
+
 // -------------------------------
 
 // Define uma lista com os tipos diferentes de Rooms

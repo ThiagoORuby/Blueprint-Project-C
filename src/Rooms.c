@@ -103,3 +103,19 @@ void setRoomTypes()
         room_types[i] = room;
     }
 }
+
+// Libera os espaços
+int freeRooms(Room * list)
+{
+    Room * temp1 = list, * temp2;
+
+    while(temp1 != NULL)
+    {
+        temp2 = temp1;
+        temp1 = temp1->next;
+        free(temp2->super);
+        free(temp2);
+    }
+
+    return 0;
+}

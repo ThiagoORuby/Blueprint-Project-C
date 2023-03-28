@@ -359,6 +359,8 @@ void keyboard(unsigned char key, int x, int y)
 {
     if(key == 'q')
     {
+        // termina o programa e libera a lista
+        freeRooms(list_rooms);
         exit(0);
     }
     if(key == '=')
@@ -475,5 +477,7 @@ int main(int argc, char* argv[])
 
     // execute the loop
     glutMainLoop();
-    return 0;
+
+    // Termina o programa e libera a lista
+    return freeRooms(list_rooms);
 }

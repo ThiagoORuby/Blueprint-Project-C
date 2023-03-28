@@ -16,6 +16,8 @@ Room * newRoom(char * name, int interval[], double wf);
 
 void pushRoom(Room ** list, Room type, double area, double wf);
 
+void reverseList(Room** head_ref);
+
 void printRooms(Room * list);
 
 void setRoomTypes();

@@ -45,7 +45,7 @@ void _midle_angle_point(double text_pos[], double bg_angle, double delta_angle, 
 }
 
 // draw a Sector
-void drawSector(SectorRoom * obj, double r1, double r2, int wall_pos)
+void drawSector(SectorRoom * obj, double r1, double r2, int wall_pos, int inv)
 {
     int factor, f, pos = 0;
     double dangle = 0, deg, text_pos[2], angle;
@@ -61,7 +61,7 @@ void drawSector(SectorRoom * obj, double r1, double r2, int wall_pos)
         // set wall color
         glColor3f(1.0f, 0.0f, 0.4f);
         // draw intern line
-        angle += dangle;
+        angle += dangle*inv;
         deg = angle * M_PI / 180;
 
         // edge points of the room
@@ -255,7 +255,20 @@ void _sliding_door(double points[][2], double limit_line[][2], double length, in
     double m, m1, leaf_points[4][2], leaf_disp[2] = {0.075, 0.105};
     int order[4] = {0, 2, 3, 1}, k = 0;
 
-    _draw_linear_boxes(points, limit_line, length, &m, dir, order);
+    double lengths[] = {1.2, 1.0, 0.8, 0.6, 0.4, 0.3, 0.2};
+    if(length < 0) // dynamic length
+    {
+        for(int i = 0; i < 5; i++)
+        {
+            if((dist_points(limit_line[0], limit_line[1]) - lengths[i])/2 > 0.1)
+            {
+                length = lengths[i];
+                break;
+            } 
+        }
+    }
+
+    _draw_linear_boxes(points, limit_line, length, &m, (-1)*dir, order);
 
     // draw the leaves by point[3] and point[5]
     glColor3f(0.4f, 1.0f, 0.2f); // green color
@@ -266,7 +279,7 @@ void _sliding_door(double points[][2], double limit_line[][2], double length, in
         for(int j = 0; j < 2; j++)
         {
             displace_point(points[i], m1, leaf_disp[j], leaf_points[j], k*wall);
-            displace_point(leaf_points[j], m, length/2, leaf_points[j+2], dir);
+            displace_point(leaf_points[j], m, length/2, leaf_points[j+2], dir*(-1));
         }
 
         glBegin(GL_LINE_LOOP);
@@ -284,11 +297,25 @@ void _sliding_door(double points[][2], double limit_line[][2], double length, in
 void _sliding_circular_door(SectorRoom * obj, double length, int leafs, double r1)
 {
     double arc, k, deltab, points[4][2], angles[2];
+    double lengths[] = {1.2, 1.0, 0.8, 0.6, 0.4, 0.3, 0.2};
     if(obj->delta == -1) return (void) printf("Please, draw first");
 
     arc = (obj->delta * M_PI/180)*r1;
+
+    if(length < 0) // dynamic length
+    {
+        for(int i = 0; i < 5; i++)
+        {
+            if((arc - lengths[i])/2 > 0.1)
+            {
+                length = lengths[i];
+                break;
+            } 
+        }
+    }
+
     k = (arc - length)/2;
-    deltab = k/r1;
+    deltab = (k+0.15)/r1;
 
     if(k < 0) return (void) printf("Don't has space in this room");
 
@@ -333,7 +360,7 @@ void _sliding_circular_door(SectorRoom * obj, double length, int leafs, double r
 }
 
 // mapping : wall -> {enable, type} => {{}, {}, {}} 
-void putSectorDoors(SectorRoom * obj, int mapping[][2], double lengths[], double r1)
+void putSectorDoors(SectorRoom * obj, int mapping[][2], double lengths[], double r1, double r2)
 {
     // testing with wall -1 -> edges (0, 1);
     double m, points[8][2], dist;
@@ -373,6 +400,12 @@ void putSectorDoors(SectorRoom * obj, int mapping[][2], double lengths[], double
         {
             _sliding_door(points, obj->wall_points, lengths[2], factor, -1);
         }   
+    }
+
+    // if is the Hall
+    if(!strcmp(obj->name, "Hall"))
+    {
+        _sliding_circular_door(obj, lengths[1], 1, r2);
     }
 
 

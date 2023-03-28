@@ -27,7 +27,8 @@ void intersection(double line1[], double line2[], double intersect[]){
 }
 
 double _coef(double points[][2]){
-    return (points[0][1] - points[1][1])/(points[0][0] - points[1][0]);
+    double coef = (points[0][1] - points[1][1])/(points[0][0] - points[1][0]);
+    return coef;
 }
 
 double _coef2(double p1[], double p2[]){
@@ -35,6 +36,7 @@ double _coef2(double p1[], double p2[]){
 }
 
 void displace_point(double p[], double m, double length, double displace[], int dir){
+    
     double module = sqrt(1 + m*m);
     displace[0] = p[0] + dir*length*(1/module);
     displace[1] = p[1] + dir*length*(m/module);

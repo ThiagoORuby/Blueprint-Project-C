@@ -77,4 +77,8 @@ computador
 ...
 */
 
+void draw_plant(double x0, double y0);
+
+void draw_vase(double x0, double y0);
+
 #endif //FURNITURE_H

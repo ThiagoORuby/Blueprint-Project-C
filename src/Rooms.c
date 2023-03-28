@@ -51,6 +51,43 @@ void pushRoom(Room ** list, Room type, double area, double wf)
     }
 }
 
+
+void reverseList(Room** head_ref) {
+  //1. If head is not null create three nodes
+  //   prevNode - pointing to head,
+  //   tempNode - pointing to head,
+  //   curNode - pointing to next of head
+  if(*head_ref != NULL) {
+    Room* prevNode = *head_ref;
+    Room* tempNode = *head_ref;
+    Room* curNode = (*head_ref)->next;
+    
+    //2. assign next and previous of prevNode 
+    //   as itself to make the first node as last 
+    //   node of the reversed list
+    prevNode->next = prevNode;
+    prevNode->prev = prevNode;
+    
+    while(curNode != *head_ref) {
+      //3. While the curNode is not head adjust links 
+      //   (unlink curNode and link it to the reversed list 
+      //   from front and modify curNode and prevNode)  
+      tempNode = curNode->next;
+
+      curNode->next = prevNode;
+      prevNode->prev = curNode;
+      (*head_ref)->next = curNode;
+      curNode->prev = *head_ref;
+
+      prevNode = curNode;
+      curNode = tempNode;
+    }
+
+    //4. Make prevNode (last node) as head
+    *head_ref = prevNode->prev;
+  }
+} 
+
 void printRooms(Room * list)
 {
     Room * temp = list;

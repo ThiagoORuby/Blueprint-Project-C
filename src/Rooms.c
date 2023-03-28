@@ -4,16 +4,15 @@
 #include "Rooms.h"
 #include "utils.h"
 
-// initialize list of rooms
+// Inicializa a lista estática de tipos de Room
 Room room_types[8];
-
 // names
 char * room_names[] = {"Hall", "Closet", "Quarto", "WC", "Cozinha", "Lavanderia", "Sala Estudos", "Escritorio"};
 // list of put_furniture functions
 // max_min
 int area_ranges[][2] = {{5, 6}, {5,6}, {12, 18}, {6,8}, {12, 15}, {5, 7}, {8, 10}, {8, 10}};
 
-// Creating a new Room
+// Cria nova Room
 Room * newRoom(char * name, int interval[2], double wf)
 {
     Room * room = malloc(sizeof(Room));
@@ -29,6 +28,7 @@ Room * newRoom(char * name, int interval[2], double wf)
     return room;
 }
 
+// Adiciona novo elemento na lista circular
 void pushRoom(Room ** list, Room type, double area, double wf)
 {
     Room * temp;
@@ -51,43 +51,34 @@ void pushRoom(Room ** list, Room type, double area, double wf)
     }
 }
 
+// Inverte a lista circular
+void reverseList(Room** list) {
 
-void reverseList(Room** head_ref) {
-  //1. If head is not null create three nodes
-  //   prevNode - pointing to head,
-  //   tempNode - pointing to head,
-  //   curNode - pointing to next of head
-  if(*head_ref != NULL) {
-    Room* prevNode = *head_ref;
-    Room* tempNode = *head_ref;
-    Room* curNode = (*head_ref)->next;
+  if(*list != NULL) {
+    Room* prevNode = *list;
+    Room* tempNode = *list;
+    Room* curNode = (*list)->next;
     
-    //2. assign next and previous of prevNode 
-    //   as itself to make the first node as last 
-    //   node of the reversed list
     prevNode->next = prevNode;
     prevNode->prev = prevNode;
     
-    while(curNode != *head_ref) {
-      //3. While the curNode is not head adjust links 
-      //   (unlink curNode and link it to the reversed list 
-      //   from front and modify curNode and prevNode)  
+    while(curNode != *list) {
       tempNode = curNode->next;
 
       curNode->next = prevNode;
       prevNode->prev = curNode;
-      (*head_ref)->next = curNode;
-      curNode->prev = *head_ref;
+      (*list)->next = curNode;
+      curNode->prev = *list;
 
       prevNode = curNode;
       curNode = tempNode;
     }
 
-    //4. Make prevNode (last node) as head
-    *head_ref = prevNode->prev;
+    *list = prevNode->prev;
   }
 } 
 
+// Printa a lista de Rooms
 void printRooms(Room * list)
 {
     Room * temp = list;
@@ -101,7 +92,7 @@ void printRooms(Room * list)
 }
 
 
-// Creating the list of room types
+// Cria a lista com os tipos diferentes de Room
 void setRoomTypes()
 {
     for(int i = 0; i < 8; i++)

@@ -44,7 +44,7 @@ void _midle_angle_point(double text_pos[], double bg_angle, double delta_angle, 
     text_pos[1] = (sin(deg) * (r1 + r2))/2;
 }
 
-// draw a Sector
+// Desenha SectorRoom
 void drawSector(SectorRoom * obj, double r1, double r2, int wall_pos, int inv)
 {
     int factor, f, pos = 0;
@@ -115,7 +115,7 @@ void drawSector(SectorRoom * obj, double r1, double r2, int wall_pos, int inv)
     drawWord(text_pos[0], text_pos[1] + 0.3, obj->name); // draw name
 }
 
-// draw windows
+// Desenha Janelas
 // type = (-1) low window | (1) high window
 void putSectorWindows(SectorRoom * obj, int type, int qnt, double length, double r2)
 {
@@ -170,7 +170,8 @@ void putSectorWindows(SectorRoom * obj, int type, int qnt, double length, double
     return;
 }
 
-// DOOR TYPES
+// ---- DOOR TYPES ----
+
 void _draw_linear_boxes(double points[][2], double limit_line[][2], double length, double *m, int dir, int order[])
 {
     double disp[3] = {DOOR_BOX, DOOR_BOX + length, 2*DOOR_BOX + length};
@@ -359,6 +360,9 @@ void _sliding_circular_door(SectorRoom * obj, double length, int leafs, double r
     
 }
 
+// ---------------------
+
+// Desenha as portas
 // mapping : wall -> {enable, type} => {{}, {}, {}} 
 void putSectorDoors(SectorRoom * obj, int mapping[][2], double lengths[], double r1, double r2)
 {

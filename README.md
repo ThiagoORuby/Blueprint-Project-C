@@ -4,7 +4,7 @@ An Automatic Blueprints Generator Software made with the C language using the Op
 
 <hr>
 
-Um Gerador de plantas baixas automático feito em C ussando a API OpenGL.
+Um Gerador de plantas baixas automático feito em C usando a API OpenGL.
 
 ### Entradas
 

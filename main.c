@@ -11,6 +11,7 @@
 #include "src/furniture_components.h"
 #include "src/vector.h"
 #include "src/Rooms.h"
+#include "src/linkedList.h"
 
 // extern params
 extern Room room_types[8];
@@ -24,8 +25,13 @@ int inversed = 0;
 int required_size = 11;
 int required_rooms[] = {0, 1, 2, 3, 3, 3, 2, 1, 6, 4, 5};
 int aditional_rooms[] = {7, 3, 2};
-int lateral_doors[] = {0, 1, 1, 0, 0, 1, 1, 0, 0, 1, 0};
-int frontal_doors[] = {1, 0, 1, 0, 1, 0, 1, 0, 1, 1, 0};
+
+
+// door mapping
+int lateral[] = {0, 1, 1, 0, 0, 1, 1, 0, 0, 1, 0};
+int frontal[] = {0, 1, 0, 1, 0, 1, 0, 1, 1, 0};
+int inversed_frontal[] = {0, 1, 1, 0, 1, 0, 1, 0, 1, 0};
+int inversed_lateral[] = {0, 1, 0, 0, 1, 1, 0, 0, 1, 1, 0};
 
 // algorithm params
 int epochs = 0;
@@ -33,6 +39,7 @@ int steps = 0;
 int interval = 100;
 int completed = 0;
 
+// Inicializa a lista de comodos setando areas aleatorias
 void initialize_required_list()
 {
     for(int i = 0; i < 11; i++)
@@ -43,6 +50,7 @@ void initialize_required_list()
     }
 }
 
+// Desenha os comodos seguindo a lista circular
 void draw_room_list(Room * list)
 {
     double init_angle = -10, new_angle;
@@ -64,27 +72,7 @@ void draw_room_list(Room * list)
     }
 }
 
-void draw_room_list_inv(Room * list)
-{
-    double init_angle = 10, new_angle;
-    Room * temp = list;
-
-    temp->super->bg_angle = init_angle;
-    temp->super->draw(temp->super, r1 - WALL, r2, 1, -1);
-    new_angle = temp->super->bg_angle  + temp->super->delta;
-    temp = temp->next;
-    int i = 0;
-    while(temp != list)
-    {
-        if(i == steps) break;
-        temp->super->bg_angle = new_angle;
-        temp->super->draw(temp->super, r1 - WALL, r2, 1, -1);
-        new_angle = temp->super->bg_angle  + temp->super->delta;
-        temp = temp->next;
-        i++;
-    }
-}
-
+// Calcula area restante
 double calc_rest_area(Room * list)
 {
     double dangle, area;
@@ -100,6 +88,7 @@ double calc_rest_area(Room * list)
     return area;
 }
 
+// Encontra comodos abaixo do limite maximo
 int find_rooms_below_max(Room * list)
 {
     int count = 0;
@@ -112,6 +101,7 @@ int find_rooms_below_max(Room * list)
     return count;
 }
 
+// Encontra comodos acima do limite minimo
 int find_rooms_above_min(Room * list)
 {
     int count = 0;
@@ -124,6 +114,7 @@ int find_rooms_above_min(Room * list)
     return count;
 }
 
+// Propaga fração de area nos comodos disponíveis
 void propagate_new_area(Room * list, double add_area)
 {
     double limit, true_add;
@@ -155,6 +146,8 @@ void propagate_new_area(Room * list, double add_area)
     }while(temp != list);
 }
 
+// Tenta adicionar novos comodos
+// escritorio -> WC -> quarto
 int try_add_new_room(Room * list, double * area)
 {
     for(int i = 0; i < 3; i++)
@@ -163,8 +156,18 @@ int try_add_new_room(Room * list, double * area)
         if(*area >= room.area_interval[1] + wf)
         {
             pushRoom(&list, room, room.area_interval[1], wf);
-            lateral_doors[required_size] = 0;
-            frontal_doors[required_size] = 1;
+            
+            if(inversed)
+            {
+                inversed_lateral[required_size] = 0;
+                inversed_frontal[required_size - 1] = 1;
+            }
+            else
+            {
+                lateral[required_size] = 0;
+                frontal[required_size - 1] = 1;
+            }
+
             required_size++;
             *area -= (room.area_interval[1] + wf);
         }
@@ -175,6 +178,7 @@ int try_add_new_room(Room * list, double * area)
     return 1;
 }
 
+// Propaga fração de area desconsiderando os limites maximos
 void propagate_without_limit(Room * list, double area)
 {
     Room * temp = list;
@@ -188,7 +192,7 @@ void propagate_without_limit(Room * list, double area)
 
 }
 
-// draw all windows
+// Desenha todas as janelas 
 void draw_all_windows(Room * list)
 {
     Room * temp = list;
@@ -207,29 +211,31 @@ void draw_all_windows(Room * list)
     }while(temp != list);
 }
 
-// draw all doors
+// Desenha todas as portas
 void draw_all_doors(Room * list)
 {
     Room * temp = list;
     double size[] = {-1, -1, -1};
-    int index1 = 0, index2 = (inversed) ? required_size - 1 : 0;
-    // hall first
+    int * temp1 = (inversed) ? inversed_lateral : lateral;
+    int * temp2 = (inversed) ? inversed_frontal : frontal;
+    int index1 = 0, index2 = 0;
+
+    // Desenha do hall primeiro
     int mapping[3][2] = {{0, 0}, {0, 0}, {0, 0}};
-    mapping[1][0] = frontal_doors[index1];
-    mapping[2][0] = lateral_doors[index2];
+    mapping[1][0] = 1;
+    mapping[2][0] = temp1[index2++];
+
     temp->super->put_doors(temp->super, mapping, size, r1, r2);
     temp = temp->next;
-    index1 = (inversed) ? required_size - 1 : 1;
-    index2 += (inversed) ? -1 : 1;
+    
+    // Desenha dos outros comodos 
     while(temp != list)
     {
         int mapping2[3][2] = {{0, 0}, {0, 0}, {0, 0}};
-        mapping2[1][0] = frontal_doors[index1];
-        mapping2[2][0] = lateral_doors[index2];
+        mapping2[1][0] = temp2[index1++];
+        mapping2[2][0] = temp1[index2++];
         temp->super->put_doors(temp->super, mapping2, size, r1, r2);
         temp = temp->next;
-        index1 += (inversed) ? -1 : 1;
-        index2 += (inversed) ? -1 : 1;
     }
 }
 
@@ -241,16 +247,17 @@ void algorithm(Room * list)
     int rooms_qnt, ret;
     double area, add_area;
     char info[30];
-    area = calc_rest_area(list);
+    area = calc_rest_area(list); // calcula area restante
     printf("Add Area: %.2lf\n", area);
+
     if(area > 1e-8)
     {
-        rooms_qnt = find_rooms_below_max(list);
+        rooms_qnt = find_rooms_below_max(list); //encontra comodos fora da area maxima
         printf("rooms qnt: %d\n", rooms_qnt);
         if(rooms_qnt > 0)
         {
             add_area = area/rooms_qnt;
-            propagate_new_area(list, add_area);
+            propagate_new_area(list, add_area); // propaga a fraçao de area
             return;
         }
         else // rooms_qnt == 0 -> nao eh possivel aumentar os quartos
@@ -262,21 +269,22 @@ void algorithm(Room * list)
     }
     else if (area < 0)
     {
-        rooms_qnt = find_rooms_above_min(list);
+        rooms_qnt = find_rooms_above_min(list); // encontra comodos acima do limite minimo de area
         printf("rooms qnt: %d\n", rooms_qnt);
         if(rooms_qnt > 0)
         {
-            add_area = area/rooms_qnt;
-            propagate_new_area(list, add_area);
+            add_area = area/rooms_qnt; 
+            propagate_new_area(list, add_area); // propaga a fraçao negativa da area para os comodos
         }
         return;
     }else
     {
-        completed = TRUE;
+        completed = TRUE; // sem areas restantes, casa finalizada
     }
 
 }
 
+// Atualiza o timer criando a animação
 void update(int value) {
 
     glutPostRedisplay();
@@ -292,6 +300,7 @@ void update(int value) {
     }
 }
 
+// Desenha as informações tecnicas na tela
 void draw_info_params()
 {
     // draw info params
@@ -310,6 +319,7 @@ void draw_info_params()
     drawText("- : Zoom out", 100, 160);
 }
 
+// Renderiza a janela
 void RenderScene(void)
 {
     // clear the window with current clearing color
@@ -340,7 +350,7 @@ void RenderScene(void)
     glutSwapBuffers();
 }
 
-// press key function
+// Press key function
 void keyboard(unsigned char key, int x, int y)
 {
     if(key == 'q')
@@ -362,7 +372,6 @@ void keyboard(unsigned char key, int x, int y)
             algorithm(list_rooms); // update room areas
             epochs++;
             steps = 0; // restart draw
-            printf("required_size = %d\n", required_size);
         }
     }
 
@@ -408,15 +417,16 @@ int main(int argc, char* argv[])
     printf("\nDigite o angulo correspondente ao norte: ");
     scanf("%lf", &north_angle);
 
-    // House limit area == 120m2
+    // Limite de área da casa = 120 m2 - 210 m2
     r2 = (height - 3.0)/2;
     r3 = (width - 3.0)/2;
-    if((r2 < 6.2 || r2 > 8.2) || (r3 < 6.2)) 
+    if((r2 < 6.2 || r2 > 8.2) || (r3 < 6.2 || width > 30) ) 
         return printf("Não é possível gerar uma casa circular com essas dimensões!\n");
 
+    // Com base no raio_minimo/2 e no raio atual/2, sorteia o raio do comodo central (estar/jantar)
     r1 = random_double(3.1, r2/2);
-    printf("r1 = %.2lf\n", r1);
     
+    // Calcula o fator da parade (area das paredes)
     wf = ((r2 - 0.15) - (r1 + 0.15))*0.15; // wall factor
 
     // initial configs
@@ -438,9 +448,10 @@ int main(int argc, char* argv[])
     // initialize list of room types
     setRoomTypes();
 
-    initialize_required_list();
+    initialize_required_list(); // inicializando a lista circular de comodos
     printRooms(list_rooms);
-    // se o angulo está nessa faixa, comodos serao invertidos
+
+    // se o angulo não estão nessa faixa, comodos serao invertidos a partir do hall
     if(!(north_angle >= 90 && north_angle <= 270))
     {
         reverseList(&list_rooms);

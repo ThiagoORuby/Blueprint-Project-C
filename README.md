@@ -15,4 +15,4 @@ Por fim, ele recebe a informação do norte, que determina a posição dos quart
 
 ### Algoritmo de Adaptação
 
-![fluxograma](fluxo-algoritmo.png)
+![fluxograma](img/fluxo-algoritmo.png)

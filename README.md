@@ -34,6 +34,6 @@ Pressionando "N", o algoritmo é acionado e então uma nova época é gerada, at
 
 O conjunto de comodos se apresenta como uma lista duplamente encadeada circular, o que torna as
 operações de inserção de novos comodos com complexidade O(1), deixando o algoritmo mais rápido.
-Também possibilita o cálculo da área restante não preenchida mais fácil, visto que o a partir
+Também possibilita o cálculo da área restante não preenchida de forma imediata, visto que a partir
 do primeiro elemento, é possível acessar o útlimo e encontrar a distância geometrica entre eles.
 

@@ -331,20 +331,24 @@ void RenderScene(void)
     drawGround(width, height);
     drawGround(width + 0.3, height + 0.3);
 
+    // Desenha area da casa
     drawHouseArea(r2);
+    // Desenha area do comodo principal
     drawMainRoom(r1);
     
+    // Desenha todos os comodos
     draw_room_list(list_rooms);
     
+    // Se estiver tudo completo, desenha as portas e janelas
     if(completed && steps >= required_size)
     {
         draw_all_windows(list_rooms);
         draw_all_doors(list_rooms);
     }
 
-    // Draw Compass
+    // Desenha rosa dos ventos
     drawCompassRose(5, -6, north_angle);
-    // draw info params
+    // Desenha info params
     draw_info_params();
 
     glutSwapBuffers();

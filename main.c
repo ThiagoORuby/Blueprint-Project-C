@@ -347,7 +347,7 @@ void RenderScene(void)
     }
 
     // Desenha rosa dos ventos
-    drawCompassRose(5, -6, north_angle);
+    drawCompassRose(width/2 - 1.5, -height/2 + 1.5, north_angle);
     // Desenha info params
     draw_info_params();
 
@@ -428,7 +428,7 @@ int main(int argc, char* argv[])
         return printf("Não é possível gerar uma casa circular com essas dimensões!\n");
 
     // Com base no raio_minimo/2 e no raio atual/2, sorteia o raio do comodo central (estar/jantar)
-    r1 = random_double(3.1, r2/2);
+    r1 = random_double((r2 < 7) ? 3.1 : 3.3, r2/2);
     
     // Calcula o fator da parade (area das paredes)
     wf = ((r2 - 0.15) - (r1 + 0.15))*0.15; // wall factor

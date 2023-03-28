@@ -6,7 +6,7 @@ An Automatic Blueprints Generator Software made with the C language using the Op
 
 Um Gerador de plantas baixas automático feito em C usando a API OpenGL.
 
-### Mebros do Grupo
+### Membros do Grupo
 
 - Thiago Ribeiro
 - Diogo Tallys
